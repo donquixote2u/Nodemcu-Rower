@@ -1,8 +1,6 @@
 --[[  Rower Mk 3 - by Bruce Woolmore 7/4/2017
   This version for Wemos D1 Mini (ESP8266 dev bd) running Nodemcu lua env 
   vsn 1.5.4.1 custom compile with math,ucglib 
-  
- 18/6/15 note stroke timeout of 700 too high - skips on fast pulls
  counts all Hi to Lo state changes in the Hall effect sensor
 ILI9341 screen driven by SPI ; board pin map as follows:
 D0/lua0->screen RST,D5/lua5->SCK,D6/lua6->MISO,D7/lua7->MOSI
@@ -11,19 +9,13 @@ other connections:
 pgm switches (to be added) D3/lua3->PGM1 D2/lua2->PGM2
 D1/lua1->Hall effect sensor pin  (pulled up via 4k7 resistor to 3v3
 --]]
-
- -- on interrupt from Hall Effect Sensor pin, calc elapsed time since last int
 function CalcSpeed()
-print("\r\ninterrupt triggered")
+-- print("\r\ninterrupt triggered")
+ -- on interrupt from Hall Effect Sensor pin, calc elapsed time since last int
 msNow=tmr.now()
-if (lastPulse ~= 0) then
-    local Period = msNow-lastPulse
-    --if (Period > 250000) then -- if period not > 1/4 sec, bogus trigger
-     pulseDetected=true 
-     pulseElapsed=Period
-     print("ms="..pulseElapsed.."\r\n")
-   --end
-end  -- end comparison against last 
+if (lastPulse ~= 0) then -- ignore first pulse in stroke
+   pulseElapsed=msNow-lastPulse -- calc period between pulses
+end   
 lastPulse=msNow -- save reading as Last
 end 
 
@@ -45,7 +37,7 @@ pulseDistance=20.0  --// distance travelled in cm between each pulse
 dofile("screen.lua")
 init_display() -- set up display screen ready to show data
 --init state variables:
-pulseDetected=false
+pulseElapsed=0
 lastPulse = 0      -- previous sensor timestamp 
 strokeElapsed = 0  -- ms since end of last stroke
 strokeCount=0 
@@ -62,50 +54,52 @@ function waitloop() -- runs every 500ms
  if(startTime==0) then  startTime=msNow end  -- capture start
  if(lastPulse~=0) then timeElapsed=msNow-lastPulse
  else timeElapsed=0 end 
+ if(pulseElapsed>0) then
+   updateData() -- process last pulse period 
+ end  
  if(timeElapsed>sessionTimeout) then sessionEnd() 
  else   -- in session
    if(timeElapsed>strokeTimeout) then  strokeEnd() end 
-   -- if the state has changed and change is to LOW, update display
-   if (pulseDetected) then 
-     updateData()
-     pulseDetected=false
-     lastPulse=msNow -- reset time since last pulse to now
-   end --pulseOn
-  end --session
+ end -- timeouts
 end -- function  
 
  function updateData()
-   print("data updated") 
+   print("ms="..pulseElapsed.."\r\n")
    pulseCount=pulseCount+1
    strokeElapsed=strokeElapsed+pulseElapsed
    totDistance=totDistance+(pulseDistance/100) -- distance in metres
    totTime=totTime+(pulseElapsed / 1000.0)   -- time in seconds
    pulseElapsed=0
-   lastPulse=msNow
  end
 
  function strokeEnd() 
-   print("end of stroke detected") 
-   if (pulseCount > 1) then strokeCount=strokeCount+1 end
+   disInt()     -- disable interrupt
+   print(" strokeElapsed="..strokeElapsed)
    if(strokeElapsed > 0) then  
+    strokeCount=strokeCount+1
 	-- display stroke stats  
 	kmDistance=totDistance/1000.0 -- metres to km
-	kmHour=(kmDistance/(msNow-startTime)/3600000.0)
-	strokesMinute=60000.0/strokeElapsed
-    Scrxpos=100 -- current position on screen - x coordinate
+	kmHour=math.floor((kmDistance/(msNow-startTime)/3600000.0))
+	strokesMinute=math.floor(60000.0/strokeElapsed)
+    Scrxpos=10 -- current position on screen - x coordinate
     Scrypos=100 -- current position on screen - y coordinate
     --disp:setColor(255, 168, 0) orange
-    disp:setColor(0, 255, 0)-- green
-	print(" strokeElapsed="..strokeElapsed)
-	dprint(1,strokeCount.." | "..totDistance.."M | ")
-	dprintl(1,totTime.."s     ")   -- print the number of seconds since reset:
     disp:setColor(20, 240, 240) -- lt blue
-	dprint(1,strokesMinute) -- print calcs done at stroke end
-	dprint(1,"s/m | "..kmHour.."k/h   ") 
+    dprintl(1,"Strokes   |   Metres   | Seconds")
+    disp:setColor(0, 255, 0)-- green
+	dprint(2,strokeCount.." | "..string.format("%04.1f",totDistance).."M | ")
+	dprintl(2,string.format("%04.1f",totTime).."s     ")   -- print the number of seconds since reset:
+    disp:setColor(20, 240, 240) -- lt blue
+    dprintl(1,"Strokes/Min | Km/Hr")
+    disp:setColor(0, 255, 0)-- green
+	dprint(2,strokesMinute) -- print calcs done at stroke end
+	dprint(2," | "..kmHour.."km/h   ") 
 	pulseElapsed=0      -- reset stroke-end detect timer
 	pulseCount=0
 	strokeElapsed=0
    end
+   lastPulse=msNow -- save reading as Last
+   enInt()
  end
 
 function sessionEnd() 
