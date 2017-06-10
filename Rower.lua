@@ -58,7 +58,7 @@ end -- function
 
  function strokeEnd() 
    disInt()     -- disable interrupt
-   print(" strokeElapsed="..strokeElapsed)
+   print("pulse count ="..pulseCount.." strokeElapsed="..strokeElapsed)
    if(strokeElapsed > 0) then  
     strokeCount=strokeCount+1
 	-- display stroke stats  
