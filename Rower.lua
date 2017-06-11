@@ -8,8 +8,8 @@ other connections:
 pgm switches (to be added) D4/gpio3->PGM1 D3/gpio2->PGM2
 D1/lua1->Hall effect sensor pin  (pulled up via 4k7 resistor to 3v3
 --]]
+
 function CalcSpeed()
--- print("\r\ninterrupt triggered")
  -- on interrupt from Hall Effect Sensor pin, calc elapsed time since last int
 msNow=tmr.now()
 if (lastPulse ~= 0) then -- ignore first pulse in stroke
@@ -20,6 +20,8 @@ if (lastPulse ~= 0) then -- ignore first pulse in stroke
    totTime=totTime+(pulseElapsed / 1000.0)   -- time in seconds
 end   
 lastPulse=msNow -- save reading as Last
+tmr.start(strokeTimer) -- set timer for end-of-stroke detection
+tmr.start(sessionTimer) -- set timer for end-of-session detection
 end 
 
 --enable interrupts
@@ -45,18 +47,9 @@ function resetCounts()
   startTime=0
 end  
 
-function waitloop() -- runs every 500ms from main timer
- msNow=tmr.now()
- if(startTime==0) then  startTime=msNow end  -- capture start
- if(lastPulse~=0) then timeElapsed=msNow-lastPulse
- else timeElapsed=0 end 
- if(timeElapsed>sessionTimeout) then sessionEnd() 
- else   -- in session
-   if(timeElapsed>strokeTimeout) then  strokeEnd() end 
- end -- timeouts
-end -- function  
-
  function strokeEnd() 
+   tmr.stop(strokeTimer) -- set timer for end-of-stroke detection
+   tmr.stop(sessionTimer) -- set timer for end-of-session detection
    disInt()     -- disable interrupt
    print("pulse count ="..pulseCount.." strokeElapsed="..strokeElapsed)
    if(strokeElapsed > 0) then  
@@ -81,6 +74,7 @@ end -- function
 	pulseElapsed=0      -- reset stroke-end detect timer
 	pulseCount=0
 	strokeElapsed=0
+    tmr.start(sessionTimer) -- restart end-of-session detection timer
    end
    lastPulse=msNow -- save reading as Last
    enInt()
@@ -88,7 +82,8 @@ end -- function
 
 function sessionEnd() 
  -- display session stats
- strokeEnd()
+ -- strokeEnd()
+ print("Session end")
  lastPulse=0
  strokeCount=0
  totDistance=0.0
@@ -97,11 +92,14 @@ function sessionEnd()
 
 -- start here ; intit constants, variables, set up sensor pin interrupts
 sessionTimeout=5000     --// timeout in ms to detect end of session
-strokeTimeout=1500   --// timeout in ms to detect end of stroke
+strokeTimeout=1000   --// timeout in ms to detect end of stroke
 pulseDistance=20.0  --// distance travelled in cm between each pulse
 SENSEPIN = 1
 dofile("screen.lua")
+strokeTimer=tmr.create()
+tmr.register(strokeTimer,strokeTimeout,tmr.ALARM_SEMI,strokeEnd)
+sessionTimer=tmr.create()
+tmr.register(sessionTimer,sessionTimeout,tmr.ALARM_SEMI,sessionEnd)
 init_display() -- set up display screen ready to show data
 enInt()         -- turn sensor interrupt on D1 (gpio4) on
 resetCounts()
-tmr.alarm( 1, 500, 1,  function() waitloop() end)
