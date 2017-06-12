@@ -17,7 +17,7 @@ if (lastPulse ~= 0) then -- ignore first pulse in stroke
    pulseCount=pulseCount+1
    strokeElapsed=strokeElapsed+pulseElapsed
    totDistance=totDistance+(pulseDistance/100) -- distance in metres
-   totTime=totTime+(pulseElapsed / 1000.0)   -- time in seconds
+   -- totTime=totTime+(pulseElapsed / 1000000.0)   -- time in seconds
 end   
 lastPulse=msNow -- save reading as Last
 if(startTime==0) then -- new session
@@ -59,7 +59,8 @@ end
     strokeCount=strokeCount+1
 	-- display stroke stats  
 	kmDistance=totDistance/1000.0 -- metres to km
-	kmHour=math.floor((kmDistance/(msNow-startTime)/3600000.0))
+    totTime=((msNow-startTime)/1000000.0) 
+	kmHour=((kmDistance * 3600)/totTime)
 	strokesMinute=math.floor((60*1000000)/strokeElapsed)
     Scrxpos=10 -- current position on screen - x coordinate
     Scrypos=50 -- current position on screen - y coordinate
@@ -67,14 +68,13 @@ end
     disp:setColor(20, 240, 240) -- lt blue
     dprintl(1,"Strokes   |   Metres   | Seconds")
     disp:setColor(0, 255, 0)-- green
-	dprint(2,strokeCount.." | "..string.format("%04.1f",totDistance).."M | ")
-	dprintl(2,string.format("%04.1f",totTime).."s     ")   -- print the number of seconds since reset:
-    dprintl(1," ") -- space a line
+	dprint(2,strokeCount.." | "..string.format("%4.1f",totDistance).."M | "..string.format("%4.1f",totTime).."s")   -- print the number of seconds since reset:
+    Scrxpos=10 -- current position on screen - x coordinate
+    Scrypos=120 -- current position on screen - y coordinate
     disp:setColor(20, 240, 240) -- lt blue
     dprintl(1,"Strokes/Min | Km/Hr")
     disp:setColor(0, 255, 0)-- green
-	dprint(2,strokesMinute) -- print calcs done at stroke end
-	dprint(2," | "..kmHour.."km/h   ") 
+	dprint(2,strokesMinute.." | "..string.format("%4.1f",kmHour).."km/h   ") 
 	pulseElapsed=0      -- reset stroke-end detect timer
 	pulseCount=0
 	strokeElapsed=0
@@ -87,10 +87,7 @@ end
 function SessionEnd() 
  -- display session stats
  print("Session end")
- lastPulse=0
- strokeCount=0
- totDistance=0.0
- totTime=0.0
+ ResetCounts()
  end
 
 -- start here ; intit constants, variables, set up sensor pin interrupts
