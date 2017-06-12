@@ -20,22 +20,25 @@ if (lastPulse ~= 0) then -- ignore first pulse in stroke
    totTime=totTime+(pulseElapsed / 1000.0)   -- time in seconds
 end   
 lastPulse=msNow -- save reading as Last
+if(startTime==0) then -- new session
+    startTime=msNow   -- start time for time/distance calcs
+end
 tmr.start(strokeTimer) -- set timer for end-of-stroke detection
 tmr.start(sessionTimer) -- set timer for end-of-session detection
 end 
 
 --enable interrupts
-function enInt()     
+function EnInt()     
     gpio.mode(SENSEPIN,gpio.INT)
     gpio.trig(SENSEPIN,'down',CalcSpeed)
 end
 
 --disable interrupts
-function disInt()
+function DisInt()
      gpio.mode(SENSEPIN, gpio.INPUT)
 end
 
-function resetCounts() 
+function ResetCounts() 
 --init state variables:
   pulseElapsed=0
   lastPulse = 0      -- previous sensor timestamp 
@@ -47,25 +50,26 @@ function resetCounts()
   startTime=0
 end  
 
- function strokeEnd() 
+ function StrokeEnd() 
    tmr.stop(strokeTimer) -- set timer for end-of-stroke detection
    tmr.stop(sessionTimer) -- set timer for end-of-session detection
-   disInt()     -- disable interrupt
-   print("pulse count ="..pulseCount.." strokeElapsed="..strokeElapsed)
+   DisInt()     -- disable interrupt
+   print("pulse count ="..pulseCount.." strokeElapsed="..strokeElapsed.. "totDistance="..totDistance)
    if(strokeElapsed > 0) then  
     strokeCount=strokeCount+1
 	-- display stroke stats  
 	kmDistance=totDistance/1000.0 -- metres to km
 	kmHour=math.floor((kmDistance/(msNow-startTime)/3600000.0))
-	strokesMinute=math.floor(60000.0/strokeElapsed)
+	strokesMinute=math.floor((60*1000000)/strokeElapsed)
     Scrxpos=10 -- current position on screen - x coordinate
-    Scrypos=100 -- current position on screen - y coordinate
+    Scrypos=50 -- current position on screen - y coordinate
     --disp:setColor(255, 168, 0) orange
     disp:setColor(20, 240, 240) -- lt blue
     dprintl(1,"Strokes   |   Metres   | Seconds")
     disp:setColor(0, 255, 0)-- green
 	dprint(2,strokeCount.." | "..string.format("%04.1f",totDistance).."M | ")
 	dprintl(2,string.format("%04.1f",totTime).."s     ")   -- print the number of seconds since reset:
+    dprintl(1," ") -- space a line
     disp:setColor(20, 240, 240) -- lt blue
     dprintl(1,"Strokes/Min | Km/Hr")
     disp:setColor(0, 255, 0)-- green
@@ -75,14 +79,13 @@ end
 	pulseCount=0
 	strokeElapsed=0
     tmr.start(sessionTimer) -- restart end-of-session detection timer
-   end
+   end              -- end of stroke processing (not 0)
    lastPulse=msNow -- save reading as Last
-   enInt()
+   EnInt()
  end
 
-function sessionEnd() 
+function SessionEnd() 
  -- display session stats
- -- strokeEnd()
  print("Session end")
  lastPulse=0
  strokeCount=0
@@ -92,14 +95,14 @@ function sessionEnd()
 
 -- start here ; intit constants, variables, set up sensor pin interrupts
 sessionTimeout=5000     --// timeout in ms to detect end of session
-strokeTimeout=1000   --// timeout in ms to detect end of stroke
+strokeTimeout=2000   --// timeout in ms to detect end of stroke
 pulseDistance=20.0  --// distance travelled in cm between each pulse
 SENSEPIN = 1
 dofile("screen.lua")
-strokeTimer=tmr.create()
-tmr.register(strokeTimer,strokeTimeout,tmr.ALARM_SEMI,strokeEnd)
-sessionTimer=tmr.create()
-tmr.register(sessionTimer,sessionTimeout,tmr.ALARM_SEMI,sessionEnd)
+strokeTimer=tmr.create()  -- // end of stroke detected by timeout on pulse
+tmr.register(strokeTimer,strokeTimeout,tmr.ALARM_SEMI,StrokeEnd)
+sessionTimer=tmr.create()  -- // end of session is timeout on stroke
+tmr.register(sessionTimer,sessionTimeout,tmr.ALARM_SEMI,SessionEnd)
 init_display() -- set up display screen ready to show data
-enInt()         -- turn sensor interrupt on D1 (gpio4) on
-resetCounts()
+EnInt()         -- turn sensor interrupt on D1 (gpio4) on
+ResetCounts()
