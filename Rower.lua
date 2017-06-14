@@ -12,13 +12,13 @@ D1/lua1->Hall effect sensor pin  (pulled up via 4k7 resistor to 3v3
 function CalcSpeed()
  -- on interrupt from Hall Effect Sensor pin, calc elapsed time since last int
 msNow=tmr.now()
-if (lastPulse ~= 0) then -- ignore first pulse in stroke
-   local pulseElapsed=msNow-lastPulse -- calc period between pulses
-   pulseCount=pulseCount+1
+pulseCount=pulseCount+1
+if (pulseCount > 1) then -- ignore first pulse in stroke
+   pulseElapsed=msNow-lastPulse -- calc period between pulses
    strokeElapsed=strokeElapsed+pulseElapsed
    totDistance=totDistance+(pulseDistance/100) -- distance in metres
    -- totTime=totTime+(pulseElapsed / 1000000.0)   -- time in seconds
-end   
+end
 lastPulse=msNow -- save reading as Last
 if(startTime==0) then -- new session
     startTime=msNow   -- start time for time/distance calcs
@@ -54,14 +54,17 @@ end
    tmr.stop(strokeTimer) -- set timer for end-of-stroke detection
    tmr.stop(sessionTimer) -- set timer for end-of-session detection
    DisInt()     -- disable interrupt
-   print("pulse count ="..pulseCount.." strokeElapsed="..strokeElapsed.. "totDistance="..totDistance)
-   if(strokeElapsed > 0) then  
+   print("pulse count ="..pulseCount.." strokeElapsed="..strokeElapsed)
+   if(pulseCount > 1) then  -- must have 2+ pulses for  stroke
     strokeCount=strokeCount+1
+    -- add distance coasted during stroke return
+    totDistance=(strokeTimeout*K1/pulseElapsed)*(pulseDistance/100)
+	print(" totDistance="..totDistance)
 	-- display stroke stats  
 	kmDistance=totDistance/1000.0 -- metres to km
-    totTime=((msNow-startTime)/1000000.0) 
+    totTime=((msNow-startTime)/M1) 
 	kmHour=((kmDistance * 3600)/totTime)
-	strokesMinute=math.floor((60*1000000)/strokeElapsed)
+	strokesMinute=math.floor(strokeCount*60/totTime)
     Scrxpos=10 -- current position on screen - x coordinate
     Scrypos=50 -- current position on screen - y coordinate
     --disp:setColor(255, 168, 0) orange
@@ -72,9 +75,9 @@ end
     Scrxpos=10 -- current position on screen - x coordinate
     Scrypos=120 -- current position on screen - y coordinate
     disp:setColor(20, 240, 240) -- lt blue
-    dprintl(1,"Strokes/Min | Km/Hr")
+    dprintl(1,"Strokes/Min  |  Km/Hr")
     disp:setColor(0, 255, 0)-- green
-	dprint(2,strokesMinute.." | "..string.format("%4.1f",kmHour).."km/h   ") 
+	dprint(2,strokesMinute.."   |  "..string.format("%4.1f",kmHour).."km/h   ") 
 	pulseElapsed=0      -- reset stroke-end detect timer
 	pulseCount=0
 	strokeElapsed=0
@@ -94,6 +97,7 @@ function SessionEnd()
 sessionTimeout=5000     --// timeout in ms to detect end of session
 strokeTimeout=2000   --// timeout in ms to detect end of stroke
 pulseDistance=20.0  --// distance travelled in cm between each pulse
+K1=1000;M1=1000000          -- // numeric constants
 SENSEPIN = 1
 dofile("screen.lua")
 strokeTimer=tmr.create()  -- // end of stroke detected by timeout on pulse
