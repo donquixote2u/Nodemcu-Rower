@@ -99,6 +99,8 @@ strokeTimeout=2000   --// timeout in ms to detect end of stroke
 pulseDistance=20.0  --// distance travelled in cm between each pulse
 K1=1000;M1=1000000          -- // numeric constants
 SENSEPIN = 1
+BUTTON1=2
+BUTTON2=3
 dofile("screen.lua")
 strokeTimer=tmr.create()  -- // end of stroke detected by timeout on pulse
 tmr.register(strokeTimer,strokeTimeout,tmr.ALARM_SEMI,StrokeEnd)
@@ -106,4 +108,8 @@ sessionTimer=tmr.create()  -- // end of session is timeout on stroke
 tmr.register(sessionTimer,sessionTimeout,tmr.ALARM_SEMI,SessionEnd)
 init_display() -- set up display screen ready to show data
 EnInt()         -- turn sensor interrupt on D1 (gpio4) on
+dofile("menu.lua")
+MenuInit()
+gpio.mode(BUTTON1,gpio.INT)  -- set btton1 to activate menu
+gpio.trig(BUTTON1,'down',MenuDisplay)
 ResetCounts()
