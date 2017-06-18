@@ -22,9 +22,10 @@ end
 lastPulse=msNow -- save reading as Last
 if(startTime==0) then -- new session
     startTime=msNow   -- start time for time/distance calcs
+    disp:clearScreen()
 end
-tmr.start(strokeTimer) -- set timer for end-of-stroke detection
-tmr.start(sessionTimer) -- set timer for end-of-session detection
+tmr.start(strokeTimer) -- set/reset timer for end-of-stroke detection
+tmr.start(sessionTimer) -- set/reset timer for end-of-session detection
 end 
 
 --enable interrupts
@@ -54,11 +55,11 @@ end
    tmr.stop(strokeTimer) -- set timer for end-of-stroke detection
    tmr.stop(sessionTimer) -- set timer for end-of-session detection
    DisInt()     -- disable interrupt
-   print("pulse count ="..pulseCount.." strokeElapsed="..strokeElapsed)
+   -- debug print("pulse count ="..pulseCount.." strokeElapsed="..strokeElapsed)
    if(pulseCount > 1) then  -- must have 2+ pulses for  stroke
     strokeCount=strokeCount+1
     -- add distance coasted during stroke return
-    totDistance=(strokeTimeout*K1/pulseElapsed)*(pulseDistance/100)
+    totDistance=totDistance+((strokeTimeout*K1/pulseElapsed)*(pulseDistance/100))
 	print(" totDistance="..totDistance)
 	-- display stroke stats  
 	kmDistance=totDistance/1000.0 -- metres to km
@@ -88,15 +89,19 @@ end
  end
 
 function SessionEnd() 
- -- display session stats
- print("Session end")
+  print("Session End")
  ResetCounts()
  end
 
+function Menu() 
+  ResetCounts()
+  MenuDisplay()
+ end
+ 
 -- start here ; intit constants, variables, set up sensor pin interrupts
 sessionTimeout=5000     --// timeout in ms to detect end of session
-strokeTimeout=2000   --// timeout in ms to detect end of stroke
-pulseDistance=20.0  --// distance travelled in cm between each pulse
+strokeTimeout=1500   --// timeout in ms to detect end of stroke
+pulseDistance=50.0  --// distance travelled in cm between each pulse
 K1=1000;M1=1000000          -- // numeric constants
 SENSEPIN = 1
 BUTTON1=2
@@ -109,7 +114,4 @@ tmr.register(sessionTimer,sessionTimeout,tmr.ALARM_SEMI,SessionEnd)
 init_display() -- set up display screen ready to show data
 EnInt()         -- turn sensor interrupt on D1 (gpio4) on
 dofile("menu.lua")
-MenuInit()
-gpio.mode(BUTTON1,gpio.INT)  -- set btton1 to activate menu
-gpio.trig(BUTTON1,'down',MenuDisplay)
 ResetCounts()
