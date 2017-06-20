@@ -88,6 +88,13 @@ end
    EnInt()
  end
 
+function DrawStatus() 
+  fullDistance=menu[1][2][menu[1][3]] -- get default distance
+  myPos=math.floor(totDistance/fullDistance*22)
+  pPos=math.floor(menu[2][2][menu[2][3]]*pulseDistance*totTime/fullDistance*22)
+  print("myPos="..myPos.." pPos="..pPos)
+end
+ 
 function SessionEnd() 
   print("Session End")
  ResetCounts()
@@ -113,5 +120,5 @@ sessionTimer=tmr.create()  -- // end of session is timeout on stroke
 tmr.register(sessionTimer,sessionTimeout,tmr.ALARM_SEMI,SessionEnd)
 init_display() -- set up display screen ready to show data
 EnInt()         -- turn sensor interrupt on D1 (gpio4) on
-dofile("menu.lua")
+dofile("menu2.lua")
 ResetCounts()

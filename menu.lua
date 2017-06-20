@@ -1,5 +1,5 @@
 function MenuInit() 
--- menu struct: item,option array, deafult index
+-- menu struct: {item,option array, default index}
   menu={"Distance(M)",{50,1000,1500},2}
   menuIndex=0
 end
