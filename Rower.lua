@@ -111,8 +111,6 @@ strokeTimeout=1500   --// timeout in ms to detect end of stroke
 pulseDistance=50.0  --// distance travelled in cm between each pulse
 K1=1000;M1=1000000          -- // numeric constants
 SENSEPIN = 1
-BUTTON1=2
-BUTTON2=3
 dofile("screen.lua")
 strokeTimer=tmr.create()  -- // end of stroke detected by timeout on pulse
 tmr.register(strokeTimer,strokeTimeout,tmr.ALARM_SEMI,StrokeEnd)
