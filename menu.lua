@@ -4,7 +4,7 @@ function MenuInit()
   menuIndex=0
 end
 
-function NextMenu() 
+function NextItem() -- highlights next item, redisplays
   if(bounce1On) then
     print("button 1 bounced")
     return 
@@ -29,11 +29,11 @@ function SelectIt()
   else
    bounce2On=true -- turned off by bounce timer
    tmr.start(bounceTimer) 
-   print("Menu button 2")
+   menuIndex=0
+   print("Menu button 2:"..currentCommand)
    f=loadstring(currentCommand) -- load last command selected from menu
    if(f) then f() end -- if command not null, execute
-   menuIndex=0
-   NextMenu()
+   -- NextMenu()
   end        
 end 
 
@@ -44,16 +44,17 @@ function BounceCancel()
  end
   
 function MenuDisplay(menuKey) --  key of menu in menus array
- if(menuKey~=nil) then 
-   print("new menu:"..menuKey)
-   currentMenu=menus[menuKey]
+ if(menuKey~=nil) then      -- will be nil if stepping            
+   -- debug    print("new menu:"..menuKey)
+   currentMenu=menus[menuKey] -- load menu array using key
+   menuIndex=1
  end  
  disp:clearScreen()
  Scrxpos=10 
  Scrypos=50
  disp:setColor(255, 168, 0) --orange
  x=0
- for key, option in pairs(currentMenu) do
+ for key, option in pairs(currentMenu) do -- step thru menu items
        x=x+1
        if(menuIndex==x) then    -- highlight default
          disp:setColor(20, 240, 240) -- lt blue
@@ -61,18 +62,17 @@ function MenuDisplay(menuKey) --  key of menu in menus array
        else
          disp:setColor(10, 120, 120) -- dk blue 
        end
-      dprintl(1,key)
+      dprintl(1,key)            -- display menu item
       print(key)
  end                   -- end pairs loop  
 end
  
 MenuInit()
-menuIndex=0
 BUTTON1=2   -- // link button 1 to gpio pin D3
 BUTTON2=3   -- // link button 2 to gpio pin D4
 bounceTimeout=1000     -- // timer in ms for bounce cancel
 gpio.mode(BUTTON1,gpio.INT)  -- set button1 as menu/select
-gpio.trig(BUTTON1,'down',NextMenu)
+gpio.trig(BUTTON1,'down',NextItem)
 gpio.mode(BUTTON2,gpio.INT)  -- set button2 as move down
 gpio.trig(BUTTON2,'down',SelectIt)
 bounceTimer=tmr.create()  -- // detect button bounce
