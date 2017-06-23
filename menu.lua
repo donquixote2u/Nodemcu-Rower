@@ -1,3 +1,7 @@
+-- two-button menu system; Btn1=move Btn2=Select
+-- menu called by MenuDisplay(menuname) from associative array
+-- where (menumname) is the key to the menu array
+-- all menu items are lua commands, submenus just call MenuDisplay
 function MenuInit() 
 -- menu structure: {["menu key"]={["option1"]="option1=command1", .....}}
   menus={["Main"]={["Distance"]="MenuDisplay(\"Distance\(M\)\")",["Rate"]="MenuDisplay(\"Rate\")"},["Distance\(M\)"]={["500M"]="distance=500",["1000M"]="distance=1000",["1500M"]="distance=1500"},["Rate"]={["10"]="rate=10",["20"]="rate=20",["30"]="rate=30"}}

@@ -5,7 +5,7 @@ This version for Wemos D1 Mini (ESP8266 dev bd) running Nodemcu vsn 1.5.4.1 cust
    D0/lua0->screen RST,D5/lua5->SCK,D6/lua6->MISO,D7/lua7->MOSI
    D8/lua8->CS, D4/lua4->D/C,3v3->VCC,LED(via pot), bd GND-> screen GND,
 other connections:
-pgm switches (to be added) D4/gpio3->PGM1 D3/gpio2->PGM2
+pgm switches  D4/gpio3->Button1 D3/gpio2->Button2
 D1/lua1->Hall effect sensor pin  (pulled up via 4k7 resistor to 3v3
 --]]
 
@@ -79,6 +79,9 @@ end
     dprintl(1,"Strokes/Min  |  Km/Hr")
     disp:setColor(0, 255, 0)-- green
 	dprint(2,strokesMinute.."   |  "..string.format("%4.1f",kmHour).."km/h   ") 
+	Scrxpos=10
+    Scrypos=180
+    DrawStatus()        -- show position relative to pgmd pace and finish 
 	pulseElapsed=0      -- reset stroke-end detect timer
 	pulseCount=0
 	strokeElapsed=0
@@ -88,11 +91,22 @@ end
    EnInt()
  end
 
-function DrawStatus() 
-  fullDistance=menu[1][2][menu[1][3]] -- get default distance
-  myPos=math.floor(totDistance/fullDistance*22)
-  pPos=math.floor(menu[2][2][menu[2][3]]*pulseDistance*totTime/fullDistance*22)
-  print("myPos="..myPos.." pPos="..pPos)
+function DrawStatus() -- // show distance to finish
+  local myPos=totDistance/Duration
+  local myScrPos=math.floor(myPos * 320)
+  local pgmPos=(totTime*Rate/60)/Duration
+  local pgmScrPos=math.floor(pgmPos * 320)
+  print("myPos="..myPos.." pPos="..pgmPos)
+  disp:setColor(0,0,0)          -- black out line
+  disp:drawBox(10,180,310,40)
+  disp:setColor(20, 240, 240) -- lt blue
+  disp:drawBox(pgmScrPos,180,20,10)
+  if(pgmPos>myPos) then
+    disp:setColor(255, 0, 0) -- red if you behind
+  else
+    disp:setColor(0, 255, 0) -- green if you ahead 
+  end     
+  disp:drawBox(myScrPos,200,20,10)
 end
  
 function SessionEnd() 
@@ -110,6 +124,8 @@ sessionTimeout=5000     --// timeout in ms to detect end of session
 strokeTimeout=1500   --// timeout in ms to detect end of stroke
 pulseDistance=50.0  --// distance travelled in cm between each pulse
 K1=1000;M1=1000000          -- // numeric constants
+Duration=500        --// default distance for session in metres
+Rate=10             -- // pgm dft rate in strokes/min
 SENSEPIN = 1
 dofile("screen.lua")
 strokeTimer=tmr.create()  -- // end of stroke detected by timeout on pulse
