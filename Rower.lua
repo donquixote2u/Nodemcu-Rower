@@ -15,9 +15,7 @@ msNow=tmr.now()
 pulseCount=pulseCount+1
 if (pulseCount > 1) then -- ignore first pulse in stroke
    pulseElapsed=msNow-lastPulse -- calc period between pulses
-   strokeElapsed=strokeElapsed+pulseElapsed
    totDistance=totDistance+(pulseDistance/100) -- distance in metres
-   -- totTime=totTime+(pulseElapsed / 1000000.0)   -- time in seconds
 end
 lastPulse=msNow -- save reading as Last
 if(startTime==0) then -- new session
@@ -43,7 +41,6 @@ function ResetCounts()
 --init state variables:
   pulseElapsed=0
   lastPulse = 0      -- previous sensor timestamp 
-  strokeElapsed = 0  -- ms since end of last stroke
   strokeCount=0 
   pulseCount=0
   totDistance=0
@@ -55,12 +52,16 @@ end
    tmr.stop(strokeTimer) -- set timer for end-of-stroke detection
    tmr.stop(sessionTimer) -- set timer for end-of-session detection
    DisInt()     -- disable interrupt
-   -- debug print("pulse count ="..pulseCount.." strokeElapsed="..strokeElapsed)
+   -- debug 
+   print("pulse count ="..pulseCount)
    if(pulseCount > 1) then  -- must have 2+ pulses for  stroke
     strokeCount=strokeCount+1
     -- add distance coasted during stroke return
-    totDistance=totDistance+((strokeTimeout*K1/pulseElapsed)*(pulseDistance/100))
-	print(" totDistance="..totDistance)
+    local coastDistance=((strokeTimeout*K1/(2*pulseElapsed))*(pulseDistance/100))
+    local sd=((pulseCount-1)*pulseDistance/100)
+    print("stroke distance="..sd.." coast distance="..coastDistance)
+	totDistance=totDistance+coastDistance
+	-- debug print(" totDistance="..totDistance)
 	-- display stroke stats  
 	kmDistance=totDistance/1000.0 -- metres to km
     totTime=((msNow-startTime)/M1) 
@@ -79,34 +80,42 @@ end
     dprintl(1,"Strokes/Min  |  Km/Hr")
     disp:setColor(0, 255, 0)-- green
 	dprint(2,strokesMinute.."   |  "..string.format("%4.1f",kmHour).."km/h   ") 
-	Scrxpos=10
+    Scrxpos=10
     Scrypos=180
-    DrawStatus()        -- show position relative to pgmd pace and finish 
+    if(totDistance<Duration) then
+        DrawStatus()        -- show position relative to pgmd pace and finish 
+	else dprintl(2,"FINISHED!")
+	    return
+    end
 	pulseElapsed=0      -- reset stroke-end detect timer
 	pulseCount=0
-	strokeElapsed=0
     tmr.start(sessionTimer) -- restart end-of-session detection timer
    end              -- end of stroke processing (not 0)
-   lastPulse=msNow -- save reading as Last
    EnInt()
  end
 
 function DrawStatus() -- // show distance to finish
+  -- myPos is rowers progress, pgmPos is where they should be  
   local myPos=totDistance/Duration
-  local myScrPos=math.floor(myPos * 320)
-  local pgmPos=(totTime*Rate/60)/Duration
-  local pgmScrPos=math.floor(pgmPos * 320)
+  local myScrPos=math.floor(myPos * 20)
+  local pgmPos=((totTime/60)*(pulseDistance/100)*Stroke*Rate)/Duration
+  if(pgmPos>1) then pgmPos=1 end -- avoid overshoot!
+  local pgmScrPos=math.floor(pgmPos * 20)
   print("myPos="..myPos.." pPos="..pgmPos)
-  disp:setColor(0,0,0)          -- black out line
-  disp:drawBox(10,180,310,40)
+  --disp:setColor(0,0,0)          -- black out line
+  --disp:drawBox(10,180,310,40)
   disp:setColor(20, 240, 240) -- lt blue
-  disp:drawBox(pgmScrPos,180,20,10)
+  Scrxpos=10+pgmScrPos
+  dprintl(1,"X")
+  --disp:drawBox(pgmScrPos,180,20,10)
   if(pgmPos>myPos) then
     disp:setColor(255, 0, 0) -- red if you behind
   else
     disp:setColor(0, 255, 0) -- green if you ahead 
-  end     
-  disp:drawBox(myScrPos,200,20,10)
+  end 
+  Scrxpos=10+myScrPos
+  dprintl(1,"X")    
+  --disp:drawBox(myScrPos,200,20,10)
 end
  
 function SessionEnd() 
@@ -121,11 +130,12 @@ function Menu()
  
 -- start here ; intit constants, variables, set up sensor pin interrupts
 sessionTimeout=5000     --// timeout in ms to detect end of session
-strokeTimeout=1500   --// timeout in ms to detect end of stroke
-pulseDistance=50.0  --// distance travelled in cm between each pulse
+strokeTimeout=1000   --// timeout in ms to detect end of stroke
+pulseDistance=75.0  --// distance travelled in cm between each pulse
 K1=1000;M1=1000000          -- // numeric constants
 Duration=500        --// default distance for session in metres
 Rate=10             -- // pgm dft rate in strokes/min
+Stroke=5            -- // arbitrary # of pulses per stroke for pgmd distance
 SENSEPIN = 1
 dofile("screen.lua")
 strokeTimer=tmr.create()  -- // end of stroke detected by timeout on pulse
