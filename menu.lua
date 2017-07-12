@@ -72,8 +72,8 @@ function MenuDisplay(menuKey) --  key of menu in menus array
 end
  
 MenuInit()
-BUTTON1=2   -- // link button 1 to gpio pin D3
-BUTTON2=3   -- // link button 2 to gpio pin D4
+BUTTON1=2   -- // link button 1 to gpio pin D3/GPIO4
+BUTTON2=3   -- // link button 2 to gpio pin D4/GPIO0
 bounceTimeout=1000     -- // timer in ms for bounce cancel
 gpio.mode(BUTTON1,gpio.INT)  -- set button1 as menu/select
 gpio.trig(BUTTON1,'down',NextItem)

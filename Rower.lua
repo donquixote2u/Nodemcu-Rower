@@ -52,14 +52,13 @@ end
    tmr.stop(strokeTimer) -- set timer for end-of-stroke detection
    tmr.stop(sessionTimer) -- set timer for end-of-session detection
    DisInt()     -- disable interrupt
-   -- debug 
-   print("pulse count ="..pulseCount)
+   -- debug    print("pulse count ="..pulseCount)
    if(pulseCount > 1) then  -- must have 2+ pulses for  stroke
     strokeCount=strokeCount+1
     -- add distance coasted during stroke return
     local coastDistance=((strokeTimeout*K1/(2*pulseElapsed))*(pulseDistance/100))
     local sd=((pulseCount-1)*pulseDistance/100)
-    print("stroke distance="..sd.." coast distance="..coastDistance)
+    -- debug print("stroke distance="..sd.." coast distance="..coastDistance)
 	totDistance=totDistance+coastDistance
 	-- debug print(" totDistance="..totDistance)
 	-- display stroke stats  
@@ -101,13 +100,10 @@ function DrawStatus() -- // show distance to finish
   local pgmPos=((totTime/60)*(pulseDistance/100)*Stroke*Rate)/Duration
   if(pgmPos>1) then pgmPos=1 end -- avoid overshoot!
   local pgmScrPos=math.floor(pgmPos * 20)
-  print("myPos="..myPos.." pPos="..pgmPos)
-  --disp:setColor(0,0,0)          -- black out line
-  --disp:drawBox(10,180,310,40)
+  -- debug print("myPos="..myPos.." pPos="..pgmPos)
   disp:setColor(20, 240, 240) -- lt blue
   Scrxpos=10+pgmScrPos
   dprintl(1,"X")
-  --disp:drawBox(pgmScrPos,180,20,10)
   if(pgmPos>myPos) then
     disp:setColor(255, 0, 0) -- red if you behind
   else
