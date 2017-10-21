@@ -69,16 +69,16 @@ end
     Scrxpos=10 -- current position on screen - x coordinate
     Scrypos=50 -- current position on screen - y coordinate
     --disp:setColor(255, 168, 0) orange
-    disp:setColor(20, 240, 240) -- lt blue
-    dprintl(1,"Strokes   |   Metres   | Seconds")
+    --disp:setColor(20, 240, 240) -- lt blue
+    --dprintl(1,"Strokes   |   Metres   | Seconds")
     disp:setColor(0, 255, 0)-- green
-	dprint(2,strokeCount.." | "..string.format("%4.1f",totDistance).."M | "..string.format("%4.1f",totTime).."s")   -- print the number of seconds since reset:
+	dprint(2,strokeCount.."  | "..string.format("%4.1f",totDistance).."M | "..string.format("%4.1f",totTime).."s")   -- print the number of seconds since reset:
     Scrxpos=10 -- current position on screen - x coordinate
     Scrypos=120 -- current position on screen - y coordinate
-    disp:setColor(20, 240, 240) -- lt blue
-    dprintl(1,"Strokes/Min  |  Km/Hr")
-    disp:setColor(0, 255, 0)-- green
-	dprint(2,strokesMinute.."   |  "..string.format("%4.1f",kmHour).."km/h   ") 
+    --disp:setColor(20, 240, 240) -- lt blue
+    --dprintl(1,"Strokes/Min  |  Km/Hr")
+    --disp:setColor(0, 255, 0)-- green
+	dprint(2,strokesMinute.."s/m   |  "..string.format("%4.1f",kmHour).."km/h   ") 
     Scrxpos=10
     Scrypos=180
     if(totDistance<Duration) then
