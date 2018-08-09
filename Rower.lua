@@ -5,7 +5,7 @@ This version for Wemos D1 Mini (ESP8266 dev bd) running Nodemcu vsn 1.5.4.1 cust
    D0/lua0->screen RST,D5/lua5->SCK,D6/lua6->MISO,D7/lua7->MOSI
    D8/lua8->CS, D4/lua4->D/C,3v3->VCC,LED(via pot), bd GND-> screen GND,
 other connections:
-pgm switches  D4/gpio3->Button1 D3/gpio2->Button2
+pgm switches  D3/gpio3->Button1 D2/gpio2->Button2
 D1/lua1->Hall effect sensor pin  (pulled up via 4k7 resistor to 3v3
 --]]
 
@@ -49,6 +49,10 @@ function ResetCounts()
 end  
 
  function StrokeEnd() 
+   if(menuActive) then -- clear screen of menu
+     disp.clearScreen()
+     menuActive=false
+     end
    tmr.stop(strokeTimer) -- set timer for end-of-stroke detection
    tmr.stop(sessionTimer) -- set timer for end-of-session detection
    DisInt()     -- disable interrupt
@@ -127,11 +131,11 @@ function Menu()
 -- start here ; intit constants, variables, set up sensor pin interrupts
 sessionTimeout=5000     --// timeout in ms to detect end of session
 strokeTimeout=1000   --// timeout in ms to detect end of stroke
-pulseDistance=75.0  --// distance travelled in cm between each pulse
+pulseDistance=40.0  --// distance travelled in cm between each pulse
 K1=1000;M1=1000000          -- // numeric constants
 Duration=500        --// default distance for session in metres
 Rate=10             -- // pgm dft rate in strokes/min
-Stroke=5            -- // arbitrary # of pulses per stroke for pgmd distance
+Stroke=8            -- // arbitrary # of pulses per stroke for pgmd distance
 SENSEPIN = 1
 dofile("screen.lua")
 strokeTimer=tmr.create()  -- // end of stroke detected by timeout on pulse

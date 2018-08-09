@@ -10,7 +10,7 @@ end
 
 function NextItem() -- highlights next item, redisplays
   if(bounce1On) then
-    print("button 1 bounced")
+    -- print("button 1 bounced")
     return 
   else
    bounce1On=true -- turned off by bounce timer
@@ -28,26 +28,40 @@ function NextItem() -- highlights next item, redisplays
 
 function SelectIt()
   if(bounce2On) then
-    print("button 2 bounced")
+    -- print("button 2 bounced")
     return 
   else
    bounce2On=true -- turned off by bounce timer
    tmr.start(bounceTimer) 
    menuIndex=0
-   print("Menu button 2:"..currentCommand)
+   -- print("Menu button 2:"..currentCommand)
    f=loadstring(currentCommand) -- load last command selected from menu
-   if(f) then f() end -- if command not null, execute
-   -- NextMenu()
-  end        
+   if(f) then 
+      f() -- if command not null, execute
+      if(string.find(currentCommand,"MenuDisplay")~=1) then -- if an option selected,
+         dprintl(2,currentCommand)  
+         SaveSettings()             --  save options
+      end     
+   end  -- end f 
+  end   -- end no bounce     
 end 
 
 function BounceCancel() 
-   print("bounce timer expired")
+   -- print("bounce timer expired")
    bounce1On=false
    bounce2On=false 
  end
+
+ function SaveSettings() 
+  if(file.open("settings.lua","w")) then
+     file.writeline("duration="..duration)
+     file.writeline("rate="..rate)
+     file.close()
+  end   
+ end
   
 function MenuDisplay(menuKey) --  key of menu in menus array
+ menuActive=true 
  if(menuKey~=nil) then      -- will be nil if stepping            
    -- debug    print("new menu:"..menuKey)
    currentMenu=menus[menuKey] -- load menu array using key
@@ -72,8 +86,8 @@ function MenuDisplay(menuKey) --  key of menu in menus array
 end
  
 MenuInit()
-BUTTON1=2   -- // link button 1 to gpio pin D3/GPIO4
-BUTTON2=3   -- // link button 2 to gpio pin D4/GPIO0
+BUTTON1=2   -- // link button 1 to gpio pin D2/GPIO4
+BUTTON2=3   -- // link button 2 to gpio pin D3/GPIO0
 bounceTimeout=1000     -- // timer in ms for bounce cancel
 gpio.mode(BUTTON1,gpio.INT)  -- set button1 as menu/select
 gpio.trig(BUTTON1,'down',NextItem)
