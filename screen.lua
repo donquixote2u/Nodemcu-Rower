@@ -16,6 +16,8 @@ function init_display()
     disp:setColor(0, 255, 255, 255)
     disp:setColor(1, 0, 0, 0)
     disp:setPrintDir(0)
+    Scrxpos=10
+    Scrypos=10
 end
 -- ------ SCREEN DISPLAY HANDLER -----------
 function dprint(font_index,content)

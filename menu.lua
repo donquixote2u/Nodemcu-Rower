@@ -4,8 +4,9 @@
 -- all menu items are lua commands, submenus just call MenuDisplay
 function MenuInit() 
 -- menu structure: {["menu key"]={["option1"]="option1=command1", .....}}
-  menus={["Main"]={["Distance"]="MenuDisplay(\"Distance\(M\)\")",["Rate"]="MenuDisplay(\"Rate\")"},["Distance\(M\)"]={["500M"]="distance=500",["1000M"]="distance=1000",["1500M"]="distance=1500"},["Rate"]={["10"]="rate=10",["20"]="rate=20",["30"]="rate=30"}}
+  menus={["Main"]={["Distance"]="MenuDisplay(\"Distance\(M\)\")",["Rate"]="MenuDisplay(\"Rate\")"},["Distance\(M\)"]={["500M"]="Distance=500",["1000M"]="Distance=1000",["1500M"]="Distance=1500"},["Rate"]={["10"]="Rate=10",["20"]="Rate=20",["30"]="Rate=30"}}
   menuIndex=0
+  currentCommand="file.list()"
 end
 
 function NextItem() -- highlights next item, redisplays
@@ -54,8 +55,8 @@ function BounceCancel()
 
  function SaveSettings() 
   if(file.open("settings.lua","w")) then
-     file.writeline("duration="..duration)
-     file.writeline("rate="..rate)
+     file.writeline("Duration="..Duration)
+     file.writeline("Rate="..Rate)
      file.close()
   end   
  end

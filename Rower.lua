@@ -137,6 +137,7 @@ Duration=500        --// default distance for session in metres
 Rate=10             -- // pgm dft rate in strokes/min
 Stroke=8            -- // arbitrary # of pulses per stroke for pgmd distance
 SENSEPIN = 1
+dofile("settings.lua")
 dofile("screen.lua")
 strokeTimer=tmr.create()  -- // end of stroke detected by timeout on pulse
 tmr.register(strokeTimer,strokeTimeout,tmr.ALARM_SEMI,StrokeEnd)
