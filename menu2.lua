@@ -1,81 +1,74 @@
 function MenuInit() 
--- menu structure: n*{menu title,menu array}
-  menu={"Main",{"Distance(M)",{"distance=50","distance=1000","distance=1500"}},{"Rate",{"rate=10","rate=20","rate=30"}}}
+-- menu array structure: n*{menu title, [key]=menu entry description, value=menu entry action } (recurse for levels)
+  menu={"Main",["Duration(m)"]={"Distance",["500m"]="Distance=500",["1000m"]="Distance=1000",["1500m"]="Distance=1500"},["Pace"]={"Strokes/Min",["10"]="Rate=10",["20"]="Rate=20",["30"]="Rate=30"}}
   menuIndex=0
 end
 
-function MenuMove()
+function MenuNext()
   if(bounceOn) then
     return 
   else
    tmr.start(bounceTimer) 
    bounceOn=true -- turned off by bounce timer
    print("Menu button 2")
-   menuIndex=menuIndex+1   -- next menu option 
-   MenuDisplay(menu)       -- menu  
+   Selected=Selected+1   -- next menu option 
+   if(Selected>#CurrentMenu) then
+     Selected=2
+   end  
+   MenuDisplay(CurrentMenu)       -- menu  
   end        
 end 
  
-function MenuDisplay(Struct)
- if(Level==0) then  print( "Menu button 1") end
- Level=Level+1 -- step down a level
+function MenuDisplay(Menu)
  disp:clearScreen()
  Scrxpos=10 
  Scrypos=50
  disp:setColor(255, 168, 0) --orange
- if(Level==Selected) then  -- display this menu level
-   print("level"..Level.." heading:"..Struct[1])
-   dprintl(2,Struct[1])
-   if(type(Struct[2])=="table") then -- display this level
-     for y=2,#Struct do
-       if(menuIndex>#Struct) then 
-          menuIndex=1 -- loop on overflow
-       end
-       if(y==menuIndex) then    -- highlight default
+ dprintl(2,Struct[1])
+     for y=2,#Menu do
+       if(y==Selected) then    -- highlight default
          disp:setColor(20, 240, 240) -- lt blue
        else
          disp:setColor(10, 120, 120) -- dk blue 
        end
-      dprintl(1,Struct[y][1])
-      print(Struct[y][1])
-      end                   -- end y loop  
-   else                    -- not table, must be option 
-    print("execute "..Struct[2]) 
-    local f=loadstring(Struct[2])
-    f()
-    end 
-  else                    -- not selected level
-    submenu=Struct[2] -- so go to next level 
-    MenuDisplay(submenu)
-   end  
+       k,v=next(Menu)
+     dprintl(1,k)
+     end                   -- end y loop  
 end
 
-function Menu1() 
+function MenuSelect() 
   if(bounceOn) then
     return 
   else
    tmr.start(bounceTimer)  
    bounceOn=true -- turned off by bounce timer
-   Selected=Selected+1
-   Level=0
-   MenuDisplay(menu)
-  end
- end
+   for i,v in pairs(CurrentMenu) do	-- traverse menu
+      if(i==Selected) then
+        if(type(v)=="table") then-- entry is a submenu table so display it
+		Selected=1
+		CurrentMenu=v
+		MenuDisplay(CurrentMenu)
+	else					-- entry is an option/command, so action it
+		local f=loadstring(v)
+		f() 
+	end		-- #v
+     end		-- i
+  end		-- pairs
+end
 
 function BounceCancel() 
    bounceOn=false -- set timer for end-of-stroke detection
  end
   
 MenuInit()
-Level=0
-Selected=0
+Selected=2
 BUTTON1=2   -- // link button 1 to gpio pin D3
 BUTTON2=3   -- // link button 2 to gpio pin D4
 bounceTimeout=100     -- // timer in ms for bounce cancel
 gpio.mode(BUTTON1,gpio.INT)  -- set button1 as menu/select
-gpio.trig(BUTTON1,'down',Menu1)
+gpio.trig(BUTTON1,'down',MenuSelect)
 gpio.mode(BUTTON2,gpio.INT)  -- set button2 as move down
-gpio.trig(BUTTON2,'down',MenuMove)
+gpio.trig(BUTTON2,'down',MenuNext)
 bounceTimer=tmr.create()  -- // detect button bounce
 tmr.register(bounceTimer,bounceTimeout,tmr.ALARM_SEMI,BounceCancel)
 
