@@ -1,10 +1,5 @@
 function MenuInit() 
--- menu array structure: n*{menu title, [key]=menu entry description, value=menu entry action } (recurse for levels)
-  menu={"Main",["Duration(m)"]={"Distance",["500m"]="Distance=500",["1000m"]="Distance=1000",["1500m"]="Distance=1500"},["Pace"]={"Strokes/Min",["10"]="Rate=10",["20"]="Rate=20",["30"]="Rate=30"}}
-  CurrentMenu=menu
-  ddump(CurrentMenu) 
-  Selected=next(CurrentMenu,1)  
-  print("Selected="..Selected)  
+  
 end
 
 function tdump(t)
@@ -22,7 +17,13 @@ end
 function ddump (t)           -- t is a table
   local i, v = next(t, nil)  -- i is an index of t, v = t[i]
   while i do
-    print(i.."="v)
+    print(i.."=")
+    if(type(v)=="table") then
+        print("table")
+    else  
+        print(v)
+    end
+
     i, v = next(t, i)        -- get next index
   end
 end
@@ -33,10 +34,20 @@ function MenuNext()
   else
    tmr.start(bounceTimer) 
    bounceOn=true -- turned off by bounce timer
-   print("Menu button 2")
-   Selected=next(CurrentMenu)
-   if(Selected) then
-      print("Selected="..Selected)  
+   print("Menu button 2 "..Selected)
+   local k,v
+   found=false
+   for k,v in pairs(CurrentMenu) do
+      print("k="..k)
+      if found then --next key after found is set becomes Selected
+        Selected=k
+        print("Selected="..Selected) 
+        break
+      end   
+      if(k==Selected) then
+         print("found")
+         found=true
+      end
    end 
    MenuDisplay(CurrentMenu)       -- menu  
   end               -- end bounceon off        
@@ -46,18 +57,18 @@ function MenuDisplay(Menu)
  disp:clearScreen()
  Scrxpos=10 
  Scrypos=50
- dprintl(2,Menu[1])
  for k,v in ipairs(Menu) do 
     if(k==1) then
        disp:setColor(255, 168, 0) --orange
+       dprintl(2,Menu[1])
    else    
        if(k==Selected) then    -- highlight default
          disp:setColor(20, 240, 240) -- lt blue
        else
          disp:setColor(10, 120, 120) -- dk blue 
        end
-   end    
    dprintl(1,k)
+   end    
  end                   -- end ipairs loop  
 end
 
@@ -84,8 +95,8 @@ function BounceCancel()
    bounceOn=false -- set timer for end-of-stroke detection
  end
   
-MenuInit()
-Selected=2
+-- menu array structure: n*{menu title, [key]=menu entry description, value=menu entry action } (recurse for levels)
+menu={"Main",["Duration(m)"]={"Distance",["500m"]="Distance=500",["1000m"]="Distance=1000",["1500m"]="Distance=1500"},["Pace"]={"Strokes/Min",["10"]="Rate=10",["20"]="Rate=20",["30"]="Rate=30"}}
 BUTTON1=2   -- // link button 1 to gpio pin D3
 BUTTON2=3   -- // link button 2 to gpio pin D4
 bounceTimeout=200     -- // timer in ms for bounce cancel
@@ -95,4 +106,8 @@ gpio.mode(BUTTON2,gpio.INT)  -- set button2 as move down
 gpio.trig(BUTTON2,'down',MenuNext)
 bounceTimer=tmr.create()  -- // detect button bounce
 tmr.register(bounceTimer,bounceTimeout,tmr.ALARM_SEMI,BounceCancel)
+CurrentMenu=menu
+ddump(CurrentMenu) 
+Selected=next(CurrentMenu,1)  
+print("Start="..Selected)
 
