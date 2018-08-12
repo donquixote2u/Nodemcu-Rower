@@ -3,12 +3,14 @@ function MenuInit()
   menu={"Main",["Duration(m)"]={"Distance",["500m"]="Distance=500",["1000m"]="Distance=1000",["1500m"]="Distance=1500"},["Pace"]={"Strokes/Min",["10"]="Rate=10",["20"]="Rate=20",["30"]="Rate=30"}}
   CurrentMenu=menu
   tdump(CurrentMenu) 
-  Selected=CurrentMenu[2]   
+  Selected=next(CurrentMenu,2)   
 end
 
 function tdump(t)
+  local k,v
   for k,v in pairs(t) do
     if(type(v)=="table") then
+        print(k.."=")
         tdump(v)
     else  
         print(k.."="..v)
@@ -23,13 +25,12 @@ function MenuNext()
   else
    tmr.start(bounceTimer) 
    bounceOn=true -- turned off by bounce timer
-   -- print("Menu button 2")
+   print("Menu button 2")
+   Selected=next(CurrentMenu)
    if(Selected) then
-     Selected=next(CurrentMenu)
-   else
-     Selected=next(CurrentMenu,1)  
-     MenuDisplay(CurrentMenu)       -- menu  
-   end              -- end Selected
+      print("Selected="..Selected)  
+   end 
+   MenuDisplay(CurrentMenu)       -- menu  
   end               -- end bounceon off        
 end 
  
