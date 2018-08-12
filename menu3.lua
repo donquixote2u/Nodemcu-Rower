@@ -5,20 +5,10 @@
    tmr.start(bounceTimer) 
    bounceOn=true -- turned off by bounce timer
    print("Menu button 2 "..Selected)
-   local k,v
-   found=false
-   for k,v in pairs(CurrentMenu) do
-      print("k="..k)
-      if found then --next key after found is set becomes Selected
-        Selected=k
-        print("Selected="..Selected) 
-        break
-      end   
-      if(k==Selected) then
-         print("found")
-         found=true
-      end
-   end 
+   Selected=Selected+1
+   if (Selected>#CurrentMenu) then
+      Selected=2
+   end   
    MenuDisplay(CurrentMenu)       -- menu  
   end               -- end bounceon off        
 end 
@@ -27,6 +17,7 @@ function MenuDisplay(Menu)
  disp:clearScreen()
  Scrxpos=10 
  Scrypos=50
+ local k,v
  for k,v in ipairs(Menu) do 
     if(k==1) then
        disp:setColor(255, 168, 0) --orange
@@ -49,16 +40,18 @@ function MenuSelect()
     tmr.start(bounceTimer)  
     bounceOn=true -- turned off by bounce timer
     -- print("Menu button 1")
-      if(type(CurrentMenu[Selected])=="table") then-- entry is a submenu table so display it
-		    CurrentMenu=CurrentMenu[Selected]
-            Selected=next(CurrentMenu,1)
-		    MenuDisplay(CurrentMenu)
-	  else					-- entry is an option/command, so action it
-            print("action="..CurrentMenu[Selected])
-		    local f=loadstring(CurrentMenu[Selected])
-		    f() 
-	  end		-- #v
-  end             -- bounceOn false
+    if(type(CurrentMenu[Selected])=="table") then-- entry is a submenu table so display it
+	CurrentMenu=CurrentMenu[Selected]
+   else					-- entry is an option/command, so action it
+	 local desc,option = string.match("ABC-DEF", "(.*)%|(.*)") 
+         print("action="..option)
+	 local f=loadstring(option)
+	 f() 
+	 CurrentMenu=menu
+   end		-- Selected
+   Selected=2
+   MenuDisplay(CurrentMenu)
+  end             	-- bounceOn false
 end
 
 function BounceCancel() 
@@ -78,7 +71,7 @@ function tdump(t)
 end  
   
 -- menu array structure: n*{menu title, [key]=menu entry description, value=menu entry action } (recurse for levels)
-menu={"Main",["Duration(m)"]={"Distance",["500m"]="Distance=500",["1000m"]="Distance=1000",["1500m"]="Distance=1500"},["Pace"]={"Strokes/Min",["10"]="Rate=10",["20"]="Rate=20",["30"]="Rate=30"}}
+menu={"Main",{"Distance","500m|Distance=500","1000m|Distance=1000","1500m|Distance=1500"},{"Strokes/Min","10|Rate=10","20|Rate=20","30|Rate=30"}}
 BUTTON1=2   -- // link button 1 to gpio pin D3
 BUTTON2=3   -- // link button 2 to gpio pin D4
 bounceTimeout=200     -- // timer in ms for bounce cancel
