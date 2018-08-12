@@ -1,4 +1,4 @@
-﻿function MenuNext()
+function MenuNext()
   if(bounceOn) then
     return 
   else
@@ -18,7 +18,7 @@ function MenuDisplay(Menu)
  Scrxpos=10 
  Scrypos=50
  local k,v
- for k,v in ipairs(Menu) do 
+ for k,v in pairs(Menu) do 
     if(k==1) then
        disp:setColor(255, 168, 0) --orange
        dprintl(2,Menu[1])
@@ -28,7 +28,7 @@ function MenuDisplay(Menu)
        else
          disp:setColor(10, 120, 120) -- dk blue 
        end
-   dprintl(1,k)
+   dprintl(1,v)
    end    
  end                   -- end ipairs loop  
 end
@@ -43,7 +43,7 @@ function MenuSelect()
     if(type(CurrentMenu[Selected])=="table") then-- entry is a submenu table so display it
 	CurrentMenu=CurrentMenu[Selected]
    else					-- entry is an option/command, so action it
-	 local desc,option = string.match("ABC-DEF", "(.*)%|(.*)") 
+	 local desc,option = string.match(CurrentMenu[Selected], "(.*)%|(.*)") 
          print("action="..option)
 	 local f=loadstring(option)
 	 f() 

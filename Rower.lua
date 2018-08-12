@@ -146,5 +146,5 @@ sessionTimer=tmr.create()  -- // end of session is timeout on stroke
 tmr.register(sessionTimer,sessionTimeout,tmr.ALARM_SEMI,SessionEnd)
 init_display() -- set up display screen ready to show data
 EnInt()         -- turn sensor interrupt on D1 (gpio4) on
-dofile("menu2.lua")
+dofile("menu3.lua")
 ResetCounts()
