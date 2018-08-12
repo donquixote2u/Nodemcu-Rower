@@ -123,11 +123,6 @@ function SessionEnd()
  ResetCounts()
  end
 
-function Menu() 
-  ResetCounts()
-  MenuDisplay()
- end
- 
 -- start here ; intit constants, variables, set up sensor pin interrupts
 sessionTimeout=5000     --// timeout in ms to detect end of session
 strokeTimeout=1000   --// timeout in ms to detect end of stroke
@@ -146,5 +141,5 @@ sessionTimer=tmr.create()  -- // end of session is timeout on stroke
 tmr.register(sessionTimer,sessionTimeout,tmr.ALARM_SEMI,SessionEnd)
 init_display() -- set up display screen ready to show data
 EnInt()         -- turn sensor interrupt on D1 (gpio4) on
-dofile("menu3.lua")
+dofile("menu.lua")
 ResetCounts()
