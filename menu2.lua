@@ -2,8 +2,9 @@ function MenuInit()
 -- menu array structure: n*{menu title, [key]=menu entry description, value=menu entry action } (recurse for levels)
   menu={"Main",["Duration(m)"]={"Distance",["500m"]="Distance=500",["1000m"]="Distance=1000",["1500m"]="Distance=1500"},["Pace"]={"Strokes/Min",["10"]="Rate=10",["20"]="Rate=20",["30"]="Rate=30"}}
   CurrentMenu=menu
-  tdump(CurrentMenu) 
-  Selected=next(CurrentMenu,2)   
+  ddump(CurrentMenu) 
+  Selected=next(CurrentMenu,1)  
+  print("Selected="..Selected)  
 end
 
 function tdump(t)
@@ -18,6 +19,13 @@ function tdump(t)
   end
 end     
 
+function ddump (t)           -- t is a table
+  local i, v = next(t, nil)  -- i is an index of t, v = t[i]
+  while i do
+    print(i.."="v)
+    i, v = next(t, i)        -- get next index
+  end
+end
 
 function MenuNext()
   if(bounceOn) then
