@@ -1,2 +1,2 @@
-duration=500
-rate=10
+Duration=500
+Rate=10

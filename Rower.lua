@@ -133,10 +133,11 @@ sessionTimeout=5000     --// timeout in ms to detect end of session
 strokeTimeout=1000   --// timeout in ms to detect end of stroke
 pulseDistance=40.0  --// distance travelled in cm between each pulse
 K1=1000;M1=1000000          -- // numeric constants
-Duration=500        --// default distance for session in metres
-Rate=10             -- // pgm dft rate in strokes/min
 Stroke=8            -- // arbitrary # of pulses per stroke for pgmd distance
 SENSEPIN = 1
+-- next two variables now set in settings.lua
+-- Duration=500        --// default distance for session in metres
+-- Rate=10             -- // pgm dft rate in strokes/min
 dofile("settings.lua")
 dofile("screen.lua")
 strokeTimer=tmr.create()  -- // end of stroke detected by timeout on pulse
@@ -145,5 +146,5 @@ sessionTimer=tmr.create()  -- // end of session is timeout on stroke
 tmr.register(sessionTimer,sessionTimeout,tmr.ALARM_SEMI,SessionEnd)
 init_display() -- set up display screen ready to show data
 EnInt()         -- turn sensor interrupt on D1 (gpio4) on
-dofile("menu.lua")
+dofile("menu2.lua")
 ResetCounts()
