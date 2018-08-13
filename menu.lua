@@ -71,7 +71,7 @@ end
   
  function SaveSettings() 
   if(file.open("settings.lua","w")) then
-     file.writeline("Distance="..Distance)
+     file.writeline("Duration="..Duration)
      file.writeline("Rate="..Rate)
      file.close()
   end   
@@ -79,7 +79,7 @@ end
  
   
 -- menu array structure: n*{menu title, [key]=menu entry description, value=menu entry action } (recurse for levels)
-menu={"Main","Duration",{"Distance","500m","Distance=500","1000m","Distance=1000","1500m","Distance=1500"},"Pace",{"Strokes/Min","10","Rate=10","20","Rate=20","30","Rate=30"}}
+menu={"Main","Duration",{"Distance(m)","500m","Duratione=500","1000m","Duration=1000","1500m","Duration=1500"},"Pace",{"Strokes/Min","10","Rate=10","20","Rate=20","30","Rate=30"}}
 BUTTON1=2   -- // link button 1 to gpio pin D3
 BUTTON2=3   -- // link button 2 to gpio pin D4
 bounceTimeout=100     -- // timer in ms for bounce cancel
