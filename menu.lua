@@ -90,7 +90,7 @@ gpio.trig(BUTTON2,'down',MenuNext)
 bounceTimer=tmr.create()  -- // detect button bounce
 tmr.register(bounceTimer,bounceTimeout,tmr.ALARM_SEMI,BounceCancel)
 CurrentMenu=menu
-tdump(CurrentMenu) 
+-- DEBUG tdump(CurrentMenu) 
 Selected=next(CurrentMenu,1)  
-print("Start="..Selected)
+menuActive=false
 
