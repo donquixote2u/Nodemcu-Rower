@@ -5,7 +5,7 @@ This version for Wemos D1 Mini (ESP8266 dev bd) running Nodemcu vsn 1.5.4.1 cust
    D0/lua0->screen RST,D5/lua5->SCK,D6/lua6->MISO,D7/lua7->MOSI
    D8/lua8->CS, D4/lua4->D/C,3v3->VCC,LED(via pot), bd GND-> screen GND,
 other connections:
-pgm switches  D3/gpio3->Button1 D2/gpio2->Button2
+pgm switches  D3/gpio0->Button2 D2/gpio4->Button1
 D1/lua1->Hall effect sensor pin  (pulled up via 4k7 resistor to 3v3
 --]]
 
@@ -26,14 +26,14 @@ tmr.start(strokeTimer) -- set/reset timer for end-of-stroke detection
 tmr.start(sessionTimer) -- set/reset timer for end-of-session detection
 end 
 
---enable interrupts
-function EnInt()     
+--enable flywheel timer interrupts
+function EnTint()     
     gpio.mode(SENSEPIN,gpio.INT)
     gpio.trig(SENSEPIN,'down',CalcSpeed)
 end
 
---disable interrupts
-function DisInt()
+--disable flywheel timer interrupts
+function DisTint()
      gpio.mode(SENSEPIN, gpio.INPUT)
 end
 
@@ -55,62 +55,38 @@ end
      end
    tmr.stop(strokeTimer) -- set timer for end-of-stroke detection
    tmr.stop(sessionTimer) -- set timer for end-of-session detection
-   DisInt()     -- disable interrupt
-   -- debug    print("pulse count ="..pulseCount)
+   DisTint()     -- disable interrupt
    if(pulseCount > 1) then  -- must have 2+ pulses for  stroke
     strokeCount=strokeCount+1
     -- add distance coasted during stroke return
     local coastDistance=((strokeTimeout*K1/(2*pulseElapsed))*(pulseDistance/100))
     local sd=((pulseCount-1)*pulseDistance/100)
-    -- debug print("stroke distance="..sd.." coast distance="..coastDistance)
 	totDistance=totDistance+coastDistance
-	-- debug print(" totDistance="..totDistance)
 	-- display stroke stats  
 	kmDistance=totDistance/1000.0 -- metres to km
     totTime=((msNow-startTime)/M1) 
 	kmHour=((kmDistance * 3600)/totTime)
 	strokesMinute=math.floor(strokeCount*60/totTime)
-    Scrxpos=10 -- current position on screen - x coordinate
-    Scrypos=50 -- current position on screen - y coordinate
+    Scrxpos=10 -- cursor x coord
+    Scrypos=50 -- cursor y coord
     disp:setColor(0, 255, 0)-- green
-	dprint(2,strokeCount.."  | "..string.format("%4.1f",totDistance).."M | "..string.format("%4.1f",totTime).."s")   -- print the number of seconds since reset:
-    Scrxpos=10 -- current position on screen - x coordinate
-    Scrypos=120 -- current position on screen - y coordinate
+	dprint(2,strokeCount.."  | "..string.format("%4.1f",totDistance).."M | "..string.format("%4.1f",totTime).."s")  
+    Scrxpos=10 -- cursor x coord
+    Scrypos=120 -- cursor y coord
 	dprint(2,strokesMinute.."s/m   |  "..string.format("%4.1f",kmHour).."km/h   ") 
     Scrxpos=10
     Scrypos=180
     if(totDistance<Duration) then
-        DrawStatus()        -- show position relative to pgmd pace and finish 
-	else dprintl(2,"FINISHED!")
-	    return
+         dprint(2,"TD="..Duration.."m | TR="..Rate)
+    else dprintl(2,"FINISHED!")
+	     return
     end
 	pulseElapsed=0      -- reset stroke-end detect timer
 	pulseCount=0
     tmr.start(sessionTimer) -- restart end-of-session detection timer
    end              -- end of stroke processing (not 0)
-   EnInt()
+   EnTint()
  end
-
-function DrawStatus() -- // show distance to finish
-  -- myPos is rowers progress, pgmPos is where they should be  
-  local myPos=totDistance/Duration
-  local myScrPos=math.floor(myPos * 20)
-  local pgmPos=((totTime/60)*(pulseDistance/100)*Stroke*Rate)/Duration
-  if(pgmPos>1) then pgmPos=1 end -- avoid overshoot!
-  local pgmScrPos=math.floor(pgmPos * 20)
-  -- debug print("myPos="..myPos.." pPos="..pgmPos)
-  disp:setColor(20, 240, 240) -- lt blue
-  Scrxpos=10+pgmScrPos
-  dprintl(1,"X")
-  if(pgmPos>myPos) then
-    disp:setColor(255, 0, 0) -- red if you behind
-  else
-    disp:setColor(0, 255, 0) -- green if you ahead 
-  end 
-  Scrxpos=10+myScrPos
-  dprintl(1,"X")    
-  --disp:drawBox(myScrPos,200,20,10)
-end
  
 function SessionEnd() 
   print("Session End")
@@ -134,6 +110,6 @@ tmr.register(strokeTimer,strokeTimeout,tmr.ALARM_SEMI,StrokeEnd)
 sessionTimer=tmr.create()  -- // end of session is timeout on stroke
 tmr.register(sessionTimer,sessionTimeout,tmr.ALARM_SEMI,SessionEnd)
 init_display() -- set up display screen ready to show data
-EnInt()         -- turn sensor interrupt on D1 (gpio4) on
+EnTint()         -- turn sensor interrupt on D1 (gpio4) on
 dofile("menu.lua")
 ResetCounts()

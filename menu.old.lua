@@ -1,10 +1,16 @@
 function MenuNext()
-   -- print("skip to next menu item)
+  if(bounceOn) then
+    return 
+  else
+   tmr.start(bounceTimer) 
+   bounceOn=true -- turned off by bounce timer
+   -- print("Menu button 2 "..Selected)
    Selected=Selected+2
    if (Selected>#CurrentMenu) then
       Selected=2
    end   
    MenuDisplay(CurrentMenu)       -- menu  
+  end               -- end bounceon off        
 end 
  
 function MenuDisplay(Menu)
@@ -25,8 +31,13 @@ function MenuDisplay(Menu)
   end                   -- end ipairs loop  
 end
 
-function MenuSelect()  
-    print("item selected")
+function MenuSelect() 
+  if(bounceOn) then
+    return 
+  else
+    tmr.start(bounceTimer)  
+    bounceOn=true -- turned off by bounce timer
+    -- print("Menu button 1")
     Option=Selected+1   -- get option part of menu entry
     if(type(CurrentMenu[Option])=="table") then-- entry is a submenu table so display it
 	CurrentMenu=CurrentMenu[Option]
@@ -39,28 +50,14 @@ function MenuSelect()
    end		-- Selected
    Selected=2
    MenuDisplay(CurrentMenu)
+  end             	-- bounceOn false
 end
 
-function CheckButton() -- print("button pressed") 
- Time=tmr.now()
- if(gpio.read(BUTTON1)==0) then
-    PressStart=Time
- else   -- button press has ended, test for spurious/short/long
-    pulse=Time-PressStart
-    print("pulse="..pulse)
-    if (pulse<ShortPress) then  -- press < 1/10 sec = noise?
-        PressStart=Time            -- reset time check 
-        return
-    end
-    if (pulse>LongPress) then -- long press = Set
-        MenuSelect()
-    else
-        MenuNext()
-    end        
+function BounceCancel() 
+   bounceOn=false -- set timer for end-of-stroke detection
  end
-end  
 
- function tdump(t)
+function tdump(t)
   local k,v
   for k,v in pairs(t) do
     if(type(v)=="table") then
@@ -70,7 +67,7 @@ end
         print(k.."="..v)
     end
   end
- end
+end
   
  function SaveSettings() 
   if(file.open("settings.lua","w")) then
@@ -82,15 +79,18 @@ end
  
   
 -- menu array structure: n*{menu title, [key]=menu entry description, value=menu entry action } (recurse for levels)
-menu={"Main","Duration",{"Distance(m)","500m","Duration=500","1000m","Duration=1000","1500m","Duration=1500"},"Pace",{"Strokes/Min","10","Rate=10","20","Rate=20","30","Rate=30"}}
+menu={"Main","Duration",{"Distance(m)","500m","Duratione=500","1000m","Duration=1000","1500m","Duration=1500"},"Pace",{"Strokes/Min","10","Rate=10","20","Rate=20","30","Rate=30"}}
 BUTTON1=2   -- // link button 1 to gpio pin D3
-ShortPress=100000     -- // timer in us for button short press
-LongPress=700000     -- // timer in us for button long press
+BUTTON2=3   -- // link button 2 to gpio pin D4
+bounceTimeout=100     -- // timer in ms for bounce cancel
 gpio.mode(BUTTON1,gpio.INT)  -- set button1 as menu/select
-gpio.trig(BUTTON1,'both',CheckButton)
+gpio.trig(BUTTON1,'down',MenuSelect)
+gpio.mode(BUTTON2,gpio.INT)  -- set button2 as move down
+gpio.trig(BUTTON2,'down',MenuNext)
+bounceTimer=tmr.create()  -- // detect button bounce
+tmr.register(bounceTimer,bounceTimeout,tmr.ALARM_SEMI,BounceCancel)
 CurrentMenu=menu
 -- DEBUG tdump(CurrentMenu) 
--- DEBUG MenuDisplay(CurrentMenu)
 Selected=next(CurrentMenu,1)  
 menuActive=false
 
