@@ -26,12 +26,12 @@ function MenuDisplay(Menu)
 end
 
 function MenuSelect()  
-    print("item selected")
+    -- debug   print("item selected")
     Option=Selected+1   -- get option part of menu entry
     if(type(CurrentMenu[Option])=="table") then-- entry is a submenu table so display it
 	CurrentMenu=CurrentMenu[Option]
    else					-- entry is an option/command, so action it
-     print("action="..CurrentMenu[Option])
+     -- debug  print("action="..CurrentMenu[Option])
 	 local f=loadstring(CurrentMenu[Option])
 	 f()
      SaveSettings() 
@@ -41,26 +41,37 @@ function MenuSelect()
    MenuDisplay(CurrentMenu)
 end
 
-function CheckButton() -- print("button pressed") 
- Time=tmr.now()
+function MenuButton() -- print("button pressed") 
+ local Time=tmr.now()
  if(gpio.read(BUTTON1)==0) then
     PressStart=Time
  else   -- button press has ended, test for spurious/short/long
-    pulse=Time-PressStart
-    print("pulse="..pulse)
-    if (pulse<ShortPress) then  -- press < 1/10 sec = noise?
-        PressStart=Time            -- reset time check 
+    local buttonPulse=Time-PressStart
+    -- debug print("pulse="..pulse)
+    if (buttonPulse<ShortPress) then  -- press < threshold = noise?
         return
     end
-    if (pulse>LongPress) then -- long press = Set
+    if (buttonPulse>LongPress) then -- long press = Set
         MenuSelect()
-    else
+    else                            -- short press = Next
         MenuNext()
     end        
  end
-end  
+end 
 
- function tdump(t)
+function ResetButton() -- print("button pressed") 
+ local Time=tmr.now()
+ if(gpio.read(BUTTON2)==0) then
+    ResetStart=Time
+ else   -- button press has ended, if not spurious, reset    
+ local buttonPulse=Time-ResetStart
+    if (buttonPulse>ShortPress) then 
+        node.restart()
+    end        
+ end
+end
+
+ function tdump(t)  -- debug use only 
   local k,v
   for k,v in pairs(t) do
     if(type(v)=="table") then
@@ -83,11 +94,14 @@ end
   
 -- menu array structure: n*{menu title, [key]=menu entry description, value=menu entry action } (recurse for levels)
 menu={"Main","Duration",{"Distance(m)","500m","Duration=500","1000m","Duration=1000","1500m","Duration=1500"},"Pace",{"Strokes/Min","10","Rate=10","20","Rate=20","30","Rate=30"}}
-BUTTON1=2   -- // link button 1 to gpio pin D3
+BUTTON1=2   -- // link button 1 to gpio2 pin D4
+BUTTON2=3   -- // link button 2 to gpio0 pin D3
 ShortPress=100000     -- // timer in us for button short press
 LongPress=700000     -- // timer in us for button long press
 gpio.mode(BUTTON1,gpio.INT)  -- set button1 as menu/select
-gpio.trig(BUTTON1,'both',CheckButton)
+gpio.mode(BUTTON2,gpio.INT)  -- set button2 as reset
+gpio.trig(BUTTON1,'both',MenuButton)
+gpio.trig(BUTTON2,'both',ResetButton)
 CurrentMenu=menu
 -- DEBUG tdump(CurrentMenu) 
 -- DEBUG MenuDisplay(CurrentMenu)
