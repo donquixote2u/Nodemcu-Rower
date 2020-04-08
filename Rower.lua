@@ -1,6 +1,7 @@
 --[[  Rower Mk 3 - by Bruce Woolmore 7/4/2017
 This version for Wemos D1 Mini (ESP8266 dev bd) running Nodemcu vsn 1.5.4.1 custom compile with math,ucglib 
- counts all Hi to Lo state changes in the Hall effect sensor
+ counts all Hi to Lo state changes in the Hall effect sensor for magnet on flywheel
+ Rowing session starts with first pulse sensed (stroke)
  ILI9341 screen driven by SPI ; board pin map as follows:
    D0/lua0->screen RST,D5/lua5->SCK,D6/lua6->MISO,D7/lua7->MOSI
    D8/lua8->CS, D4/lua4->D/C,3v3->VCC,LED(via pot), bd GND-> screen GND,
@@ -10,20 +11,16 @@ D1/lua1->Hall effect sensor pin  (pulled up via 4k7 resistor to 3v3
 --]]
 
 function CalcSpeed()
- -- on interrupt from Hall Effect Sensor pin, calc elapsed time since last int
-msNow=tmr.now()
+ -- on interrupt from Hall Effect Sensor pin, store time, increment pulse count
 pulseCount=pulseCount+1
 if (pulseCount > 1) then -- ignore first pulse in stroke
-   pulseElapsed=msNow-lastPulse -- calc period between pulses
    totDistance=totDistance+(pulseDistance/100) -- distance in metres
 end
-lastPulse=msNow -- save reading as Last
 if(startTime==0) then -- new session
-    startTime=msNow   -- start time for time/distance calcs
-    disp:clearScreen()
+    startTime=tmr.now()   -- start time for time/distance calcs
 end
 tmr.start(strokeTimer) -- set/reset timer for end-of-stroke detection
-tmr.start(sessionTimer) -- set/reset timer for end-of-session detection
+-- tmr.start(sessionTimer) -- set/reset timer for end-of-session detection
 end 
 
 --enable flywheel timer interrupts
@@ -39,8 +36,8 @@ end
 
 function ResetCounts() 
 --init state variables:
-  pulseElapsed=0
   lastPulse = 0      -- previous sensor timestamp 
+  lastStrokeTime = 0
   strokeCount=0 
   pulseCount=0
   totDistance=0
@@ -49,18 +46,25 @@ function ResetCounts()
 end  
 
  function StrokeEnd() 
-   if(menuActive) then -- clear screen of menu
-     disp:clearScreen()
-     menuActive=false
-     end
    tmr.stop(strokeTimer) -- set timer for end-of-stroke detection
    tmr.stop(sessionTimer) -- set timer for end-of-session detection
    DisTint()     -- disable interrupt
+   if(menuActive) then -- clear screen of menu
+     disp:clearScreen()
+     menuActive=false
+   end
    if(pulseCount > 1) then  -- must have 2+ pulses for  stroke
+    msNow=tmr.now()
     strokeCount=strokeCount+1
-    -- add distance coasted during stroke return
-    local coastDistance=((strokeTimeout*K1/(2*pulseElapsed))*(pulseDistance/100))
-    local sd=((pulseCount-1)*pulseDistance/100)
+    if(lastStrokeTime==0) then
+       lastStrokeTime=startTime
+       currStrokeRate=0
+    else
+       currStrokeRate=(M1*60)/(msNow-lastStrokeTime) 
+       lastStrokeTime=msNow 
+    end
+     -- add distance coasted during stroke return
+    local coastDistance=((currStrokeRate/10)*(pulseDistance/100))
 	totDistance=totDistance+coastDistance
 	-- display stroke stats  
 	kmDistance=totDistance/1000.0 -- metres to km
@@ -76,11 +80,7 @@ end
 	dprint(2,strokesMinute.."s/m   |  "..string.format("%4.1f",kmHour).."km/h   ") 
     Scrxpos=10
     Scrypos=180
-    if(totDistance<Duration) then
-         dprint(2,"TD="..Duration.."m | TR="..Rate)
-    else dprintl(2,"FINISHED!")
-	     return
-    end
+    dprint(2,"Last Rate = "..string.format("%4.1f",currStrokeRate).."s/m")
 	pulseElapsed=0      -- reset stroke-end detect timer
 	pulseCount=0
     tmr.start(sessionTimer) -- restart end-of-session detection timer
@@ -95,7 +95,7 @@ function SessionEnd()
 
 -- start here ; intit constants, variables, set up sensor pin interrupts
 sessionTimeout=5000     --// timeout in ms to detect end of session
-strokeTimeout=1000   --// timeout in ms to detect end of stroke
+strokeTimeout=800   --// timeout in ms to detect end of stroke
 pulseDistance=40.0  --// distance travelled in cm between each pulse
 K1=1000;M1=1000000          -- // numeric constants
 Stroke=8            -- // arbitrary # of pulses per stroke for pgmd distance
