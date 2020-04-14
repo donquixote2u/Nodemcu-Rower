@@ -84,6 +84,11 @@ end
 	pulseElapsed=0      -- reset stroke-end detect timer
 	pulseCount=0
     tmr.start(sessionTimer) -- restart end-of-session detection timer
+   else             -- pulse count < 2
+    disp:setColor(0,255, 255)-- greenblue?
+    Scrxpos=10
+    Scrypos=180
+    dprint(2,"No Stroke Detected")
    end              -- end of stroke processing (not 0)
    EnTint()
  end
